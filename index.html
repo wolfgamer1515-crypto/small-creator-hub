@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Small Creator Gaming Hub</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#0f0f0f;
+color:white;
+text-align:center;
+}
+
+h1{
+margin-top:20px;
+}
+
+#submitBox{
+margin:20px;
+}
+
+input,select,button{
+padding:10px;
+margin:5px;
+}
+
+#videoGrid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+gap:20px;
+padding:20px;
+}
+
+.card{
+background:#1a1a1a;
+padding:10px;
+border-radius:8px;
+}
+
+iframe{
+width:100%;
+height:200px;
+border:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🎮 Small Creator Gaming Hub</h1>
+
+<div id="submitBox">
+
+<input id="videoURL" placeholder="Paste YouTube Link">
+
+<select id="category">
+
+<option value="Rainbow Six Siege">Rainbow Six Siege</option>
+<option value="Minecraft">Minecraft</option>
+<option value="Call of Duty">Call of Duty</option>
+<option value="Fortnite">Fortnite</option>
+<option value="Horror">Horror</option>
+<option value="Funny">Funny</option>
+<option value="Indie">Indie Games</option>
+
+</select>
+
+<button onclick="submitVideo()">Submit Video</button>
+
+</div>
+
+<div id="videoGrid"></div>
+
+<script>
+
+const scriptURL = "https://script.google.com/macros/s/AKfycbz0vcaaIdzmg6LlWOWfJkHn6WO6xH2ctSbBdq-Bj1oCvouBUmxbIWnvpEY2dm0zdWtd1A/exec";
+
+/* GOOGLE SHEET JSON LINK */
+const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQu2O5_ph4uEkx41hvEVAM4813QkGmSgki-IwgKSNAChXAgFQWpQEBPcT6ZKnv-K4vI4BRFP-3JPVVE/output=tsv";
+
+function getYouTubeID(url){
+let regExp = /(?:youtube\.com.*v=|youtu\.be\/)([^&]+)/;
+let match = url.match(regExp);
+return match ? match[1] : null;
+}
+
+function submitVideo(){
+
+let url = document.getElementById("videoURL").value;
+let game = document.getElementById("category").value;
+
+fetch(scriptURL,{
+method:"POST",
+body:JSON.stringify({
+url:url,
+game:game
+})
+})
+.then(r=>r.json())
+.then(()=>{
+
+alert("Video submitted!");
+document.getElementById("videoURL").value="";
+
+})
+.catch(err=>{
+
+console.log(err);
+alert("Submission failed");
+
+});
+
+}
+
+function loadVideos(){
+
+fetch(sheetURL)
+.then(res => res.text())
+.then(data => {
+
+let rows = data.split("\n").slice(1);
+
+let grid = document.getElementById("videoGrid");
+
+grid.innerHTML = "";
+
+rows.forEach(row => {
+
+let cols = row.split("\t");
+
+let url = cols[0];
+
+let id = getYouTubeID(url);
+
+if(!id) return;
+
+let card = document.createElement("div");
+
+card.className = "card";
+
+card.innerHTML = `
+<iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>
+`;
+
+grid.appendChild(card);
+
+});
+
+});
+
+}
+
+function renderGames(games){
+
+let grid = document.getElementById("videoGrid");
+grid.innerHTML = "";
+
+for(let game in games){
+
+let section = document.createElement("div");
+section.innerHTML = `<h2>${game}</h2>`;
+
+let row = document.createElement("div");
+row.style.display="grid";
+row.style.gridTemplateColumns="repeat(auto-fill,minmax(300px,1fr))";
+row.style.gap="20px";
+row.style.marginBottom="40px";
+
+games[game].forEach(id=>{
+
+let card=document.createElement("div");
+card.className="card";
+
+card.innerHTML = `
+<iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>
+`;
+
+row.appendChild(card);
+
+});
+
+section.appendChild(row);
+grid.appendChild(section);
+
+}
+
+}
+
+loadVideos();
+
+</script>
